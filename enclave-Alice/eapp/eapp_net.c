@@ -3,11 +3,6 @@
 #include <string.h>
 // #include <stdio.h>
 
-#define OCALL_NET_CONNECT 1
-#define OCALL_NET_SEND    2
-#define OCALL_NET_RECV    3
-#define OCALL_NET_FREE    4
-
 typedef struct {
   int fd;
   int retval;
@@ -17,6 +12,7 @@ void custom_net_init(mbedtls_net_context *ctx) {
     ctx->fd = -1;
 }
 
+/* ocall to open internet connection */
 int custom_net_connect(mbedtls_net_context *ctx, const char *host, const char *port, int proto) {
     int ret;
     net_connect_t retval;
@@ -31,6 +27,7 @@ int custom_net_connect(mbedtls_net_context *ctx, const char *host, const char *p
     return 0;
 }
 
+/* ocall to send internet packets */
 int custom_net_send(void *ctx, const unsigned char *buf, size_t len) {
     int ret, retval;
     unsigned  char tmp_buf[2048+sizeof(int)];
@@ -43,6 +40,7 @@ int custom_net_send(void *ctx, const unsigned char *buf, size_t len) {
     return ret|retval;
 }
 
+/* ocall to receive internet packets */
 int custom_net_recv(void *ctx, unsigned char *buf, size_t len) {
     int ret;
     unsigned char tmp_buf[16896+sizeof(int)];
