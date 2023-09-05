@@ -117,6 +117,12 @@ struct report
   byte dev_public_key[PUBLIC_KEY_SIZE];
 };
 
+typedef long time_t;
+struct timespec {
+    time_t tv_sec;
+    long tv_nsec;
+};
+
 /*
 int print_hex_string(char* name, unsigned char* value, int size){
   custom_printf("%s: 0x", name);
@@ -286,12 +292,29 @@ int main(void)
      */
     mbedtls_printf("[C]  . Connecting to tcp/%s/%s...", SERVER_NAME, SERVER_PORT);
     // fflush(stdout);
-
+    struct timespec start, end;
+    int  start_sm, end_sm;
+    double total_sm;
+    double total;
+    start_sm = timer_value();
+    custom_clock_gettime((void *)&start);
+    mbedtls_printf("VALUE OF CLOCK_GETTIME: %ld\n", start.tv_nsec);
+    mbedtls_printf("VALUE OF TIMER VALUE: %d\n", start_sm);
     if ((ret = custom_net_connect(&server_fd, SERVER_NAME,
                                    SERVER_PORT, MBEDTLS_NET_PROTO_TCP)) != 0) {
         mbedtls_printf(" failed\n[C]  ! mbedtls_net_connect returned %d\n\n", ret);
         goto exit;
     }
+    custom_clock_gettime((void *)&end);
+    end_sm = timer_value();
+    mbedtls_printf("VALUE OF CLOCK_GETTIME: %ld\n", end.tv_nsec);
+    mbedtls_printf("VALUE OF TIMER VALUE: %d\n", end_sm);
+
+    total = (double)(end.tv_nsec - start.tv_nsec); // ms
+    total_sm = end_sm - start_sm;
+    mbedtls_printf("TOTAL EXECUTION TIME WITH LINUX CLOCK_GETTIME = %ld s\n", end.tv_sec - start.tv_sec);
+    mbedtls_printf("TOTAL EXECUTION TIME WITH LINUX CLOCK_GETTIME = %lf ns\n", total);
+    mbedtls_printf("TOTAL EXECUTION TIME WITH SM TIMER FUNCTION = %lds\n", total_sm);
 
     mbedtls_printf(" ok\n");
 
