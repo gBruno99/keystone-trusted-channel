@@ -74,19 +74,8 @@ export MBEDTLS_DIR_HOST=$(pwd)/mbedtls_host
 
 cd ..
 
-# if [ ! -d openssl ]
-# then
-#  git clone https://github.com/openssl/openssl.git openssl
-#  cd openssl
-#  CC=gcc CXX=g++ CROSS_COMPILE=riscv64-unknown-linux-gnu- ./Configure linux64-riscv64 --prefix=/home/giacomo/Documents/keystone-CA/openssl_install_dir --openssldir=/home/giacomo/Documents/keystone-CA/openssl_install_dir/ssl --cross-compile-prefix=riscv64-unknown-linux-gnu- no-deprecated no-hw no-threads no-apps no-async no-shared no-dynamic-engine no-comp no-dso no-module no-pinshared -static
-#  make
-#  make install
-#  cd ..
-# fi
-
-# export OPENSSL_DIR=$(pwd)/openssl_install_dir 
-
 # Build the demo
+rm -rf build
 mkdir -p build
 cd build
 cmake ..
