@@ -15,6 +15,7 @@ using namespace Keystone;
 #define OCALL_NET_FREE    4
 #define OCALL_STORE_CRT   5
 #define OCALL_READ_CRT    6
+#define OCALL_SEND_DATA   7
 
 int
 main(int argc, char** argv) {
@@ -34,6 +35,7 @@ main(int argc, char** argv) {
   register_call(OCALL_NET_FREE, net_free_wrapper);
   register_call(OCALL_STORE_CRT, store_cert_wrapper);
   register_call(OCALL_READ_CRT, read_cert_wrapper);
+  register_call(OCALL_SEND_DATA, send_data_wrapper);
 
   edge_call_init_internals(
       (uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());

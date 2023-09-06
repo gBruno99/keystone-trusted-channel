@@ -2,6 +2,8 @@
 #include "edge/edge_call.h"
 #include "host/keystone.h"
 #include "net.h"
+#include <stdio.h>
+#include <time.h>
 
 #define SERVER_PORT "4433"
 #define SERVER_NAME "localhost"
@@ -55,6 +57,8 @@ net_send_wrapper(void* buffer) {
   uintptr_t call_args;
   int ret_val;
   size_t arg_len;
+  clock_t time;
+  time = clock();
   if (edge_call_args_ptr(edge_call, &call_args, &arg_len) != 0) {
     edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
     return;
@@ -75,6 +79,9 @@ net_send_wrapper(void* buffer) {
     edge_call->return_data.call_status = CALL_STATUS_OK;
   }
 
+  time = clock() - time;
+  float execution_time = (float)(time / CLOCKS_PER_SEC); 
+  printf("[HOST] EXECUTION TIME FOR NET SEND = %f s\n", execution_time);
   /* This will now eventually return control to the enclave */
   return;
 }
@@ -144,6 +151,29 @@ net_free_wrapper(void* buffer) {
     edge_call->return_data.call_status = CALL_STATUS_OK;
   }
 
+  /* This will now eventually return control to the enclave */
+  return;
+}
+
+void 
+send_data(void *buffer, size_t len) {
+  struct execution_time *performance_data = (struct execution_time *)buffer;
+  printf("TOTAL EXECUTION TIME FOR NET SEND = %ld ms\n", (performance_data->total) / 1000000);
+
+}
+
+void
+send_data_wrapper(void* buffer) {
+  /* Parse and validate the incoming call data */
+  struct edge_call* edge_call = (struct edge_call*)buffer;
+  uintptr_t call_args;
+  int ret_val;
+  size_t arg_len;
+  if (edge_call_args_ptr(edge_call, &call_args, &arg_len) != 0) {
+    edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
+    return;
+  }
+  send_data((void *)call_args, edge_call->call_arg_size);
   /* This will now eventually return control to the enclave */
   return;
 }

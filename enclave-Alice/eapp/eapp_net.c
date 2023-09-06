@@ -8,6 +8,11 @@ typedef struct {
   int retval;
 } net_connect_t;
 
+
+void send_data(unsigned char *data, size_t len) {
+    ocall(OCALL_SEND_DATA, data, len, NULL, 0);
+    return;
+}
 void custom_net_init(mbedtls_net_context *ctx) {
     ctx->fd = -1;
 }
@@ -29,6 +34,8 @@ int custom_net_connect(mbedtls_net_context *ctx, const char *host, const char *p
 
 /* ocall to send internet packets */
 int custom_net_send(void *ctx, const unsigned char *buf, size_t len) {
+    
+    struct execution_time data;
     int ret, retval;
     unsigned  char tmp_buf[2048+sizeof(int)];
     if(len > 2048)
@@ -36,7 +43,11 @@ int custom_net_send(void *ctx, const unsigned char *buf, size_t len) {
     int *fd = (int*) tmp_buf;
     *fd = ((mbedtls_net_context *) ctx)->fd;
     memcpy(tmp_buf+sizeof(int), buf, len);
+    custom_clock_gettime((void *)&data.start);
     ret = ocall(OCALL_NET_SEND, (unsigned char *)tmp_buf, len+sizeof(int), &retval, sizeof(int));
+    custom_clock_gettime((void *)&data.end);
+    data.total = data.end.tv_nsec - data.start.tv_nsec;
+    send_data((unsigned char *)&data, sizeof(struct execution_time));
     return ret|retval;
 }
 

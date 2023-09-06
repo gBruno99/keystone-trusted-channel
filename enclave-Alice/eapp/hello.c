@@ -117,12 +117,6 @@ struct report
   byte dev_public_key[PUBLIC_KEY_SIZE];
 };
 
-typedef long time_t;
-struct timespec {
-    time_t tv_sec;
-    long tv_nsec;
-};
-
 /*
 int print_hex_string(char* name, unsigned char* value, int size){
   custom_printf("%s: 0x", name);
