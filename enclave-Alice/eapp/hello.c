@@ -264,10 +264,7 @@ int main(void)
     */
     mbedtls_printf("COMPUTING EXECUTION TIME FOR OCALLS:\n");
     time_open.total = (long)(time_open.end.tv_nsec - time_open.start.tv_nsec); 
-    mbedtls_printf("OCALL NET CONNECT = %ld ms\n", (long)(time_open.total / 1000000));
-    
-    /* send this data to the host so that it can write on performance file*/
-    send_data_to_host((unsigned char *)&time_open, sizeof(struct execution_time));
+    mbedtls_printf("OCALL NET CONNECT (total time) = %ld ms\n", (long)(time_open.total / 1000000));
     /*
      * 2. Setup stuff
      */
@@ -520,31 +517,6 @@ int main(void)
     len = ret;
     mbedtls_printf("[C] %d bytes written\n\n%s", len, (char *) buf);
 
-    /*
-    mbedtls_printf("[C]  > Write to server:");
-    // fflush(stdout);
-
-    // 2 - Send CSR
-    memcpy(buf, POST_CSR_REQUEST_START, sizeof(POST_CSR_REQUEST_START)-1);
-    len = sizeof(POST_CSR_REQUEST_START)-1;
-    memcpy(buf+len, gen_csr, csr_len);
-    len += csr_len;
-    memcpy(buf+len, POST_CSR_REQUEST_END, sizeof(POST_CSR_REQUEST_END));
-    len += sizeof(POST_CSR_REQUEST_END);
-
-    while ((ret = mbedtls_ssl_write(&ssl, buf, len)) <= 0) {
-        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-            mbedtls_printf(" failed\n[C]  ! mbedtls_ssl_write returned %d\n\n", ret);
-            goto exit;
-        }
-    }
-
-    len = ret;
-    mbedtls_printf("[C] %d bytes written\n\n%s", len, (char *) buf);
-    */
-
-    // Get the certificate issued by CA
-
     // Get crt
     do {
         len = sizeof(buf) - 1;
@@ -582,51 +554,6 @@ int main(void)
 
     } while (1);
 
-    /*
-    // Get the certificate
-    do {
-        len = sizeof(buf) - 1;
-        memset(buf, 0, sizeof(buf));
-        ret = mbedtls_ssl_read(&ssl, buf, len);
-
-        if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
-            continue;
-        }
-
-        if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
-            break;
-        }
-
-        if (ret < 0) {
-            mbedtls_printf("failed\n[C]  ! mbedtls_ssl_read returned %d\n\n", ret);
-            break;
-        }
-
-        if (ret == 0) {
-            mbedtls_printf("\n\n[C] EOF\n\n");
-            break;
-        }
-
-        len = ret;
-        mbedtls_printf(" %d bytes read\n\n%s", len, (char *) buf);
-
-        // Read the crt from the response
-        if(memcmp(buf, HTTP_CERTIFICATE_RESPONSE_START, sizeof(HTTP_CERTIFICATE_RESPONSE_START)-1)!=0) {
-            mbedtls_printf("[C] cannot read certificate\n\n");
-            break;
-        }
-        memcpy(ldevid_ca_cert, buf+sizeof(HTTP_CERTIFICATE_RESPONSE_START)-1, ldevid_ca_cert_len);
-        if(memcmp(buf+sizeof(HTTP_CERTIFICATE_RESPONSE_START)-1+ldevid_ca_cert_len, 
-                HTTP_CERTIFICATE_RESPONSE_END, sizeof(HTTP_CERTIFICATE_RESPONSE_END))!=0){
-            mbedtls_printf("[C] cannot read certificate 2\n\n");
-            goto exit;
-        }
-        print_hex_string("certificate", ldevid_ca_cert, ldevid_ca_cert_len);
-        break;
-
-    } while (1);
-    */
-
     // Parse the received certificate
     custom_x509_crt cert_gen;
     custom_x509_crt_init(&cert_gen);
@@ -645,6 +572,10 @@ int main(void)
     mbedtls_ssl_close_notify(&ssl);
 
     exit_code = MBEDTLS_EXIT_SUCCESS;
+
+    // send data to host to compute communication time enclave-host
+    send_data_to_host((unsigned char *)&time_open, sizeof(struct execution_time));
+
 
 exit:
 

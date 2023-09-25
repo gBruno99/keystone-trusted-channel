@@ -15,8 +15,10 @@
 #define TIME_RECV_FILENAME "performance_recv.txt"
 #define TIME_CLOSE_FILENAME "performance_close.txt"
 
-
-
+// struct to measure the communication host - internet
+// by receiving from enclave the ocall execution time we can extract the 
+// duration of the communication enclave-host
+struct execution_time time_open_host, time_send_host, time_recv_host, time_close_host;
 typedef struct {
   int fd;
   int retval;
@@ -36,6 +38,7 @@ net_connect_wrapper(void* buffer) {
 
   mbedtls_net_context server_fd;
   mbedtls_net_init(&server_fd);
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_open_host.start);
   /* Pass the arguments from the eapp to the exported ocall function */
   ret_val = mbedtls_net_connect(&server_fd, SERVER_NAME, SERVER_PORT, MBEDTLS_NET_PROTO_TCP);
 
@@ -52,7 +55,8 @@ net_connect_wrapper(void* buffer) {
   } else {
     edge_call->return_data.call_status = CALL_STATUS_OK;
   }
-
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_open_host.end);
+  time_open_host.total = (long)(time_open_host.end.tv_nsec - time_open_host.start.tv_nsec);
   /* This will now eventually return control to the enclave */
   return;
 }
@@ -64,8 +68,6 @@ net_send_wrapper(void* buffer) {
   uintptr_t call_args;
   int ret_val;
   size_t arg_len;
-  clock_t time;
-  time = clock();
   if (edge_call_args_ptr(edge_call, &call_args, &arg_len) != 0) {
     edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
     return;
@@ -85,9 +87,6 @@ net_send_wrapper(void* buffer) {
   } else {
     edge_call->return_data.call_status = CALL_STATUS_OK;
   }
-
-  time = clock() - time;
-  float execution_time = (float)(time / CLOCKS_PER_SEC); 
   /* This will now eventually return control to the enclave */
   return;
 }
@@ -164,9 +163,8 @@ net_free_wrapper(void* buffer) {
 void 
 send_data_to_host(void *buffer, size_t len) {
   struct execution_time *performance_data = (struct execution_time *)buffer;
-  long duration = (long)((performance_data->total) / 1000000);
-  // printf("TOTAL EXECUTION TIME FOR NET SEND = %ld ms\n", (performance_data->total) / 1000000);
-
+  long time_communication_enclave_host = performance_data->total - time_open_host.total;
+  return;
 }
 
 void
