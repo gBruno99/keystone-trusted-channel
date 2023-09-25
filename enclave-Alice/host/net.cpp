@@ -10,6 +10,13 @@
 
 #define RECV_BUFFER_SIZE 16896
 
+#define TIME_OPEN_FILENAME "performance_open.txt"
+#define TIME_SEND_FILENAME "performance_send.txt"
+#define TIME_RECV_FILENAME "performance_recv.txt"
+#define TIME_CLOSE_FILENAME "performance_close.txt"
+
+
+
 typedef struct {
   int fd;
   int retval;
@@ -81,7 +88,6 @@ net_send_wrapper(void* buffer) {
 
   time = clock() - time;
   float execution_time = (float)(time / CLOCKS_PER_SEC); 
-  printf("[HOST] EXECUTION TIME FOR NET SEND = %f s\n", execution_time);
   /* This will now eventually return control to the enclave */
   return;
 }
@@ -156,14 +162,15 @@ net_free_wrapper(void* buffer) {
 }
 
 void 
-send_data(void *buffer, size_t len) {
+send_data_to_host(void *buffer, size_t len) {
   struct execution_time *performance_data = (struct execution_time *)buffer;
-  printf("TOTAL EXECUTION TIME FOR NET SEND = %ld ms\n", (performance_data->total) / 1000000);
+  long duration = (long)((performance_data->total) / 1000000);
+  // printf("TOTAL EXECUTION TIME FOR NET SEND = %ld ms\n", (performance_data->total) / 1000000);
 
 }
 
 void
-send_data_wrapper(void* buffer) {
+send_data_to_host_wrapper(void* buffer) {
   /* Parse and validate the incoming call data */
   struct edge_call* edge_call = (struct edge_call*)buffer;
   uintptr_t call_args;
@@ -173,7 +180,7 @@ send_data_wrapper(void* buffer) {
     edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
     return;
   }
-  send_data((void *)call_args, edge_call->call_arg_size);
+  send_data_to_host((void *)call_args, edge_call->call_arg_size);
   /* This will now eventually return control to the enclave */
   return;
 }

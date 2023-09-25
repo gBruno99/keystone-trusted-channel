@@ -35,7 +35,7 @@ main(int argc, char** argv) {
   register_call(OCALL_NET_FREE, net_free_wrapper);
   register_call(OCALL_STORE_CRT, store_cert_wrapper);
   register_call(OCALL_READ_CRT, read_cert_wrapper);
-  register_call(OCALL_SEND_DATA, send_data_wrapper);
+  register_call(OCALL_SEND_DATA, send_data_to_host_wrapper);
 
   edge_call_init_internals(
       (uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());

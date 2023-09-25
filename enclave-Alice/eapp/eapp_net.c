@@ -1,6 +1,7 @@
 #include "eapp/eapp_net.h"
 #include "app/syscall.h"
 #include <string.h>
+#include "printf.h"
 // #include <stdio.h>
 
 typedef struct {
@@ -8,8 +9,17 @@ typedef struct {
   int retval;
 } net_connect_t;
 
+void initialize_execution_time(struct execution_time *data) {
+    data->start.tv_nsec = -1;
+    data->start.tv_sec = -1;
+    data->end.tv_nsec = -1;
+    data->end.tv_sec = -1;
+    data->total = -1;
 
-void send_data(unsigned char *data, size_t len) {
+    return ;
+}
+
+void send_data_to_host(unsigned char *data, size_t len) {
     ocall(OCALL_SEND_DATA, data, len, NULL, 0);
     return;
 }
@@ -35,7 +45,6 @@ int custom_net_connect(mbedtls_net_context *ctx, const char *host, const char *p
 /* ocall to send internet packets */
 int custom_net_send(void *ctx, const unsigned char *buf, size_t len) {
     
-    struct execution_time data;
     int ret, retval;
     unsigned  char tmp_buf[2048+sizeof(int)];
     if(len > 2048)
@@ -43,11 +52,22 @@ int custom_net_send(void *ctx, const unsigned char *buf, size_t len) {
     int *fd = (int*) tmp_buf;
     *fd = ((mbedtls_net_context *) ctx)->fd;
     memcpy(tmp_buf+sizeof(int), buf, len);
+#if 1
+    struct execution_time data;
+    initialize_execution_time(&data);
     custom_clock_gettime((void *)&data.start);
     ret = ocall(OCALL_NET_SEND, (unsigned char *)tmp_buf, len+sizeof(int), &retval, sizeof(int));
     custom_clock_gettime((void *)&data.end);
     data.total = data.end.tv_nsec - data.start.tv_nsec;
-    send_data((unsigned char *)&data, sizeof(struct execution_time));
+    if (data.total > 0) {
+        // legit value
+       custom_printf("OCALL NET SEND = %ld ms for %lu bytes\n", (long)(data.total / 1000000), len);
+    }
+#else
+    ret = ocall(OCALL_NET_SEND, (unsigned char *)tmp_buf, len+sizeof(int), &retval, sizeof(int));
+#endif
+
+    
     return ret|retval;
 }
 
@@ -57,7 +77,20 @@ int custom_net_recv(void *ctx, unsigned char *buf, size_t len) {
     unsigned char tmp_buf[16896+sizeof(int)];
     int *fd = (int*) tmp_buf;
     *fd = ((mbedtls_net_context *) ctx)->fd;
+#if 1
+    struct execution_time data;
+    initialize_execution_time(&data);
+    custom_clock_gettime((void *)&data.start);
     ret = ocall(OCALL_NET_RECV, tmp_buf, len, tmp_buf, len + sizeof(int));
+    custom_clock_gettime((void *)&data.end);
+    data.total = data.end.tv_nsec - data.start.tv_nsec;
+    if (data.total > 0) {
+        // legit value
+        custom_printf("OCALL NET SEND = %ld ms for %lu bytes\n", (long)(data.total / 1000000), len);
+    }
+#else 
+    ret = ocall(OCALL_NET_RECV, tmp_buf, len, tmp_buf, len + sizeof(int));
+#endif
     // printf("ocall returned %d\n", ret);
     int retval = * ((int*)tmp_buf);
     memcpy(buf, tmp_buf+sizeof(int), len);

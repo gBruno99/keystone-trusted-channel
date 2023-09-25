@@ -1,6 +1,12 @@
 #ifndef _HOST_NET_H_
 #define _HOST_NET_H_
 
+/*flags for execution time data*/
+#define OPEN 0
+#define SEND 1
+#define RECV 2 
+#define CLOSE 3
+
 struct execution_time {
     struct timespec start;
     struct timespec end;
@@ -16,5 +22,7 @@ net_recv_wrapper(void* buffer);
 void
 net_free_wrapper(void* buffer);
 void
-send_data_wrapper(void *buffer);
+send_data_to_host_wrapper(void *buffer);
+
+
 #endif

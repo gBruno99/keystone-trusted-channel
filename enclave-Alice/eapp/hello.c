@@ -117,43 +117,6 @@ struct report
   byte dev_public_key[PUBLIC_KEY_SIZE];
 };
 
-/*
-int print_hex_string(char* name, unsigned char* value, int size){
-  custom_printf("%s: 0x", name);
-  for(int i = 0; i< size; i++){
-    custom_printf("%02x", value[i]);
-  }
-  custom_printf("\n");
-  custom_printf("%s_len: %d\n", name, size);
-  return 0;
-}
-
-static void my_debug(void *ctx, int level,
-                     const char *file, int line,
-                     const char *str)
-{
-    ((void) level);
-
-    mbedtls_fprintf((FILE *) ctx, "%s:%04d: %s", file, line, str);
-    // fflush((FILE *) ctx);
-}
-
-void mbedtls_custom_setup() {
-  custom_printf("Setting calloc and free...\n");
-  mbedtls_platform_set_calloc_free(calloc, free);
-  custom_printf("Setting exit...\n");
-  mbedtls_platform_set_exit(custom_exit);
-  custom_printf("Setting custom_printf...\n");
-  mbedtls_platform_set_printf(custom_printf);
-  custom_printf("Setting custom_fprintf...\n");
-  mbedtls_platform_set_fprintf(custom_fprintf);
-  custom_printf("Setting snprintf...\n");
-  mbedtls_platform_set_snprintf(snprintf);
-  custom_printf("Setting vsnprintf...\n");
-  mbedtls_platform_set_vsnprintf(vsnprintf);
-}
-*/
-
 
 int get_crt(unsigned char *buf, unsigned char *crt, int *len);
 
@@ -176,6 +139,7 @@ int main(void)
     mbedtls_ssl_config conf;
     mbedtls_x509_crt cacert;
 
+    struct execution_time time_open, time_free;
     unsigned char nonce[128];
 
     custom_printf("Setting calloc and free...\n");
@@ -192,6 +156,8 @@ int main(void)
     mbedtls_platform_set_vsnprintf(vsnprintf);
     custom_printf("\n");
 
+    initialize_execution_time(&time_open);
+    initialize_execution_time(&time_free);
     /*
     unsigned char *test_malloc = calloc(1, 16);
     if(test_malloc == NULL) {
@@ -286,16 +252,22 @@ int main(void)
      */
     mbedtls_printf("[C]  . Connecting to tcp/%s/%s...", SERVER_NAME, SERVER_PORT);
     // fflush(stdout);
-    struct timespec start, end;
-    long total;
-    custom_clock_gettime((void *)&start);
+    custom_clock_gettime((void *)&time_open.start);
     if ((ret = custom_net_connect(&server_fd, SERVER_NAME,
                                    SERVER_PORT, MBEDTLS_NET_PROTO_TCP)) != 0) {
         mbedtls_printf(" failed\n[C]  ! mbedtls_net_connect returned %d\n\n", ret);
         goto exit;
     }
-    custom_clock_gettime((void *)&end);
+    custom_clock_gettime((void *)&time_open.end);
+    /*
+    * COMPUTING EXECUTION TIME FOR OCALLS
+    */
+    mbedtls_printf("COMPUTING EXECUTION TIME FOR OCALLS:\n");
+    time_open.total = (long)(time_open.end.tv_nsec - time_open.start.tv_nsec); 
+    mbedtls_printf("OCALL NET CONNECT = %ld ms\n", (long)(time_open.total / 1000000));
     
+    /* send this data to the host so that it can write on performance file*/
+    send_data_to_host((unsigned char *)&time_open, sizeof(struct execution_time));
     /*
      * 2. Setup stuff
      */
@@ -683,9 +655,11 @@ exit:
         mbedtls_printf("[C] Last error was: %d - %s\n\n", ret, error_buf);
     }
 #endif
-
+    custom_clock_gettime((void *)&time_free.start);
     custom_net_free(&server_fd);
-
+    custom_clock_gettime((void *)&time_free.end);
+    time_free.total = time_free.end.tv_nsec - time_free.start.tv_nsec;
+    mbedtls_printf("OCALL NET FREE = %ld ms\n", (long)(time_free.total / 1000000));
     mbedtls_x509_crt_free(&cacert);
     mbedtls_ssl_free(&ssl);
     mbedtls_ssl_config_free(&conf);
@@ -699,12 +673,6 @@ exit:
         mbedtls_printf("Error in storing crt\n");
     }
 
-    /*
-    * COMPUTING EXECUTION TIME FOR OCALLS
-    */
-    mbedtls_printf("COMPUTING EXECUTION TIME FOR OCALLS:\n");
-    total = (end.tv_nsec - start.tv_nsec); 
-    mbedtls_printf("OCALL NET CONNECT = %ld ms\n", (long)(total / 1000000));
     mbedtls_exit(exit_code);
 }
 
