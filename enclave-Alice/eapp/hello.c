@@ -158,22 +158,6 @@ int main(void)
 
     initialize_execution_time(&time_open);
     initialize_execution_time(&time_free);
-    /*
-    unsigned char *test_malloc = calloc(1, 16);
-    if(test_malloc == NULL) {
-        custom_printf("Error in malloc\n");
-        // fflush(stdout);
-    }
-    custom_printf("malloc ok\n");
-    free(test_malloc);
-   
-    time_t rawtime;
-    struct tm * timeinfo;
-
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    custom_printf("Current local time and date: %s\n", asctime(timeinfo));
-     */
     
     
     // print tci sm and tci enclave
@@ -216,22 +200,6 @@ int main(void)
     mbedtls_ctr_drbg_init(&ctr_drbg);
 
     /*
-    mbedtls_printf("\n[C]  . Seeding the random number generator...");
-    fflush(stdout);
-
-    mbedtls_entropy_init(&entropy);
-
-    if ((ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
-                                     (const unsigned char *) pers,
-                                     strlen((char*)pers))) != 0) {
-        mbedtls_printf(" failed\n[C]  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
-        goto exit;
-    }
-
-    mbedtls_printf(" ok\n");
-    */
-
-    /*
      * 0. Initialize certificates
      */
     mbedtls_printf("[C]  . Loading the CA root certificate ...");
@@ -252,16 +220,23 @@ int main(void)
      */
     mbedtls_printf("[C]  . Connecting to tcp/%s/%s...", SERVER_NAME, SERVER_PORT);
     // fflush(stdout);
+    struct timeval timeval_start, timeval_end;
+    double time_elapsed;
     custom_clock_gettime((void *)&time_open.start);
+    custom_gettimeofday((void *)&timeval_start);
     if ((ret = custom_net_connect(&server_fd, SERVER_NAME,
                                    SERVER_PORT, MBEDTLS_NET_PROTO_TCP)) != 0) {
         mbedtls_printf(" failed\n[C]  ! mbedtls_net_connect returned %d\n\n", ret);
         goto exit;
     }
     custom_clock_gettime((void *)&time_open.end);
+    custom_gettimeofday((void *)&timeval_end);
     time_open.which_ocall = OPEN;
     time_open.total = (long)(time_open.end.tv_nsec - time_open.start.tv_nsec); 
+    time_elapsed = (timeval_end.tv_sec - timeval_start.tv_sec) * 1e6;
+    time_elapsed = (time_elapsed + (timeval_end.tv_usec - timeval_start.tv_usec)) * 1e-6;
     mbedtls_printf("OCALL NET CONNECT (total time) = %ld ms\n", (long)(time_open.total / 1000000));
+    mbedtls_printf("OCALL NET CONNECT (total time with gettimeofday) = %.4f sec\n", time_elapsed);
     /*
      * 2. Setup stuff
      */

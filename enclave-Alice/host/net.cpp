@@ -4,11 +4,13 @@
 #include "net.h"
 #include <stdio.h>
 #include <time.h>
-
+#include <bits/stdc++.h>
+#include <sys/time.h>
 #define SERVER_PORT "4433"
 #define SERVER_NAME "localhost"
 
 #define RECV_BUFFER_SIZE 16896
+
 
 #define TIME_OPEN_FILENAME "performance_open.txt"
 #define TIME_SEND_FILENAME "performance_send.txt"
@@ -18,12 +20,14 @@
 // struct to measure the communication host - internet
 // by receiving from enclave the ocall execution time we can extract the 
 // duration of the communication enclave-host
+using namespace std;
 struct execution_time time_open_host, time_send_host, time_recv_host, time_free_host;
 typedef struct {
   int fd;
   int retval;
 } net_connect_t;
 
+struct timeval timeval_start, timeval_end;
 void
 net_connect_wrapper(void* buffer) {
   /* Parse and validate the incoming call data */
@@ -38,15 +42,20 @@ net_connect_wrapper(void* buffer) {
 
   mbedtls_net_context server_fd;
   mbedtls_net_init(&server_fd);
+  gettimeofday(&timeval_start, NULL);
   clock_gettime(CLOCK_REALTIME, &time_open_host.start);
   /* Pass the arguments from the eapp to the exported ocall function */
   ret_val = mbedtls_net_connect(&server_fd, SERVER_NAME, SERVER_PORT, MBEDTLS_NET_PROTO_TCP);
   clock_gettime(CLOCK_REALTIME, &time_open_host.end);
-
+  gettimeofday(&timeval_end, NULL);
+  double time_taken;
+  time_taken = (timeval_end.tv_sec - timeval_start.tv_sec) * 1e6;
+  time_taken = (time_taken + (timeval_end.tv_usec - timeval_start.tv_usec)) * 1e-6;
   net_connect_t ret;
   ret.fd = server_fd.fd;
   ret.retval = ret_val;
-
+  cout << "Time taken by host to open internet connection is : " << fixed << time_taken << setprecision(6);
+  cout << " sec" << endl;
   /* Setup return data from the ocall function */
   uintptr_t data_section = edge_call_data_ptr();
   memcpy((void*)data_section, &ret, sizeof(net_connect_t));

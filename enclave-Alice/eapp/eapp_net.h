@@ -23,6 +23,11 @@ struct timespec {
     long tv_nsec;
 };
 
+struct timeval {
+    long tv_sec;
+    long tv_usec;
+};
+
 struct execution_time {
     struct timespec start;
     struct timespec end;
