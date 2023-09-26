@@ -11,6 +11,7 @@ struct execution_time {
     struct timespec start;
     struct timespec end;
     long total;
+    int which_ocall;
 };
 
 void

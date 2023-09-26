@@ -59,9 +59,11 @@ int custom_net_send(void *ctx, const unsigned char *buf, size_t len) {
     ret = ocall(OCALL_NET_SEND, (unsigned char *)tmp_buf, len+sizeof(int), &retval, sizeof(int));
     custom_clock_gettime((void *)&data.end);
     data.total = data.end.tv_nsec - data.start.tv_nsec;
+    data.which_ocall = SEND;
     if (data.total > 0) {
         // legit value
        custom_printf("OCALL NET SEND = %ld ms for %lu bytes\n", (long)(data.total / 1000000), len);
+    //    send_data_to_host((unsigned char *)&data, sizeof(struct execution_time));
     }
 #else
     ret = ocall(OCALL_NET_SEND, (unsigned char *)tmp_buf, len+sizeof(int), &retval, sizeof(int));
@@ -84,9 +86,12 @@ int custom_net_recv(void *ctx, unsigned char *buf, size_t len) {
     ret = ocall(OCALL_NET_RECV, tmp_buf, len, tmp_buf, len + sizeof(int));
     custom_clock_gettime((void *)&data.end);
     data.total = data.end.tv_nsec - data.start.tv_nsec;
+    data.which_ocall = RECV;
     if (data.total > 0) {
         // legit value
         custom_printf("OCALL NET SEND = %ld ms for %lu bytes\n", (long)(data.total / 1000000), len);
+        // send_data_to_host((unsigned char *)&data, sizeof(struct execution_time));
+
     }
 #else 
     ret = ocall(OCALL_NET_RECV, tmp_buf, len, tmp_buf, len + sizeof(int));

@@ -259,10 +259,7 @@ int main(void)
         goto exit;
     }
     custom_clock_gettime((void *)&time_open.end);
-    /*
-    * COMPUTING EXECUTION TIME FOR OCALLS
-    */
-    mbedtls_printf("COMPUTING EXECUTION TIME FOR OCALLS:\n");
+    time_open.which_ocall = OPEN;
     time_open.total = (long)(time_open.end.tv_nsec - time_open.start.tv_nsec); 
     mbedtls_printf("OCALL NET CONNECT (total time) = %ld ms\n", (long)(time_open.total / 1000000));
     /*
@@ -589,12 +586,14 @@ exit:
     custom_clock_gettime((void *)&time_free.start);
     custom_net_free(&server_fd);
     custom_clock_gettime((void *)&time_free.end);
+    time_free.which_ocall = CLOSE;
     time_free.total = time_free.end.tv_nsec - time_free.start.tv_nsec;
     mbedtls_printf("OCALL NET FREE = %ld ms\n", (long)(time_free.total / 1000000));
     mbedtls_x509_crt_free(&cacert);
     mbedtls_ssl_free(&ssl);
     mbedtls_ssl_config_free(&conf);
     mbedtls_ctr_drbg_free(&ctr_drbg);
+    send_data_to_host((unsigned char *)&time_free, sizeof(struct execution_time));
     // mbedtls_entropy_free(&entropy);
 
     // store the certificate

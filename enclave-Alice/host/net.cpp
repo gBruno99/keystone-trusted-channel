@@ -18,7 +18,7 @@
 // struct to measure the communication host - internet
 // by receiving from enclave the ocall execution time we can extract the 
 // duration of the communication enclave-host
-struct execution_time time_open_host, time_send_host, time_recv_host, time_close_host;
+struct execution_time time_open_host, time_send_host, time_recv_host, time_free_host;
 typedef struct {
   int fd;
   int retval;
@@ -38,9 +38,10 @@ net_connect_wrapper(void* buffer) {
 
   mbedtls_net_context server_fd;
   mbedtls_net_init(&server_fd);
-  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_open_host.start);
+  clock_gettime(CLOCK_REALTIME, &time_open_host.start);
   /* Pass the arguments from the eapp to the exported ocall function */
   ret_val = mbedtls_net_connect(&server_fd, SERVER_NAME, SERVER_PORT, MBEDTLS_NET_PROTO_TCP);
+  clock_gettime(CLOCK_REALTIME, &time_open_host.end);
 
   net_connect_t ret;
   ret.fd = server_fd.fd;
@@ -55,7 +56,6 @@ net_connect_wrapper(void* buffer) {
   } else {
     edge_call->return_data.call_status = CALL_STATUS_OK;
   }
-  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_open_host.end);
   time_open_host.total = (long)(time_open_host.end.tv_nsec - time_open_host.start.tv_nsec);
   /* This will now eventually return control to the enclave */
   return;
@@ -75,9 +75,11 @@ net_send_wrapper(void* buffer) {
 
   mbedtls_net_context server_fd;
   server_fd.fd = *((int*)call_args);
+  
   /* Pass the arguments from the eapp to the exported ocall function */
+  clock_gettime(CLOCK_REALTIME, &time_send_host.start);
   ret_val = mbedtls_net_send(&server_fd, (unsigned char *) call_args+sizeof(int), arg_len-sizeof(int));
-
+  clock_gettime(CLOCK_REALTIME, &time_send_host.end);
   /* Setup return data from the ocall function */
   uintptr_t data_section = edge_call_data_ptr();
   memcpy((void*)data_section, &ret_val, sizeof(int));
@@ -88,6 +90,7 @@ net_send_wrapper(void* buffer) {
     edge_call->return_data.call_status = CALL_STATUS_OK;
   }
   /* This will now eventually return control to the enclave */
+  time_send_host.total = time_send_host.end.tv_nsec - time_send_host.start.tv_nsec;
   return;
 }
 
@@ -110,9 +113,13 @@ net_recv_wrapper(void* buffer) {
   if(arg_len > RECV_BUFFER_SIZE)
     ret_val = -1;
   else {
+    clock_gettime(CLOCK_REALTIME, &time_recv_host.start);
     ret_val = mbedtls_net_recv(&server_fd, recv_buffer+sizeof(int), arg_len);
+    clock_gettime(CLOCK_REALTIME, &time_recv_host.end);
   }
-
+  if (ret_val != -1) {
+    time_recv_host.total = time_recv_host.end.tv_nsec - time_recv_host.start.tv_nsec;
+  }
   *((int*)recv_buffer) = ret_val;
 
   /* Setup return data from the ocall function */
@@ -143,8 +150,11 @@ net_free_wrapper(void* buffer) {
 
   mbedtls_net_context server_fd;
   server_fd.fd = *((int*)call_args);
+  clock_gettime(CLOCK_REALTIME, &time_free_host.start);
   mbedtls_net_free(&server_fd);
+  clock_gettime(CLOCK_REALTIME, &time_free_host.end);
   ret_val = 0;
+  time_free_host.total = time_free_host.end.tv_nsec - time_free_host.start.tv_nsec;
 
   /* Setup return data from the ocall function */
   uintptr_t data_section = edge_call_data_ptr();
@@ -163,7 +173,39 @@ net_free_wrapper(void* buffer) {
 void 
 send_data_to_host(void *buffer, size_t len) {
   struct execution_time *performance_data = (struct execution_time *)buffer;
-  long time_communication_enclave_host = performance_data->total - time_open_host.total;
+  int flag = performance_data->which_ocall;
+  long eh_time;
+  switch (flag)
+  {
+  case OPEN:
+    eh_time = performance_data->total - time_open_host.total;
+    printf("\nHOST: total execution time for opening connection = %ld ms\n", (performance_data->total) / 1000000);
+    printf("\nHOST: total execution time for opening connection (host - internet) = %ld ms\n", (time_open_host.total) / 1000000);
+    printf("\nHOST: communication enclave-host (open) = %ld ns ( %ld ms) \n", eh_time, eh_time / 1000000);
+    break;
+  case SEND:
+    eh_time = performance_data->total - time_send_host.total;
+    printf("\nHOST: total execution time for sending network data = %ld ms\n", (performance_data->total) / 1000000);
+    printf("\nHOST: total execution time for sending network data (host - internet) = %ld ms\n", (time_send_host.total) / 1000000);
+    printf("\nHOST: communication enclave-host (send) = %ld ns ( %ld ms) \n", eh_time, eh_time / 1000000);
+    break;
+  case RECV:
+    eh_time = performance_data->total - time_recv_host.total;
+    printf("\nHOST: total execution time for receiving network data = %ld ms\n", (performance_data->total) / 1000000);
+    printf("\nHOST: total execution time for receiving network data (host - internet) = %ld ms\n", (time_recv_host.total) / 1000000);
+    printf("\nHOST: communication enclave-host (recv) = %ld ns ( %ld ms) \n", eh_time, eh_time / 1000000);
+    break;
+  case CLOSE:
+    eh_time = performance_data->total - time_free_host.total;
+    printf("\nHOST: total execution time for closing internet connection = %ld ms\n", (performance_data->total) / 1000000);
+    printf("\nHOST: total execution time for closing internet connection (host - internet) = %ld ms\n", (time_free_host.total) / 1000000);
+    printf("\nHOST: communication enclave-host (close) = %ld ns ( %ld ms) \n", eh_time, eh_time / 1000000);
+    break;
+  default:
+    break;
+  }
+  
+
   return;
 }
 
