@@ -164,9 +164,9 @@ int main(void)
     char report[2048] = {0};
     custom_printf("[C] Getting TCI values...\n");
     attest_enclave((void*) report, "test", 5);
-    struct report *parsed_report = (struct report*) report;
-    print_hex_string("TCI enclave", parsed_report->enclave.hash, 64);
-    print_hex_string("TCI sm", parsed_report->sm.hash, 64);
+    // struct report *parsed_report = (struct report*) report;
+    // print_hex_string("TCI enclave", parsed_report->enclave.hash, 64);
+    // print_hex_string("TCI sm", parsed_report->sm.hash, 64);
     custom_printf("\n");
 
     // try to read certificate
@@ -183,7 +183,7 @@ int main(void)
     unsigned char pk[PUBLIC_KEY_SIZE] = {0};
     create_keypair(pk, 15);
 
-    print_hex_string("LDevID PK", pk, PUBLIC_KEY_SIZE);
+    // print_hex_string("LDevID PK", pk, PUBLIC_KEY_SIZE);
     mbedtls_printf("\n");
 
 #if defined(MBEDTLS_DEBUG_C)
@@ -231,11 +231,12 @@ int main(void)
     }
     custom_clock_gettime((void *)&time_open.end);
     custom_gettimeofday((void *)&timeval_end);
-    time_open.which_ocall = OPEN;
+        time_open.which_ocall = OPEN;
     time_open.total = (long)(time_open.end.tv_nsec - time_open.start.tv_nsec); 
-    time_elapsed = (timeval_end.tv_sec - timeval_start.tv_sec) * 1e6;
+    time_elapsed = timeval_end.tv_sec - timeval_start.tv_sec;
     time_elapsed = (time_elapsed + (timeval_end.tv_usec - timeval_start.tv_usec)) * 1e-6;
     mbedtls_printf("OCALL NET CONNECT (total time) = %ld ms\n", (long)(time_open.total / 1000000));
+    mbedtls_printf("This is what I read with gettimeofday from enclave = %ld for start, %ld for end\nusec = %ld (start), %ld (end)\n", timeval_start.tv_sec, timeval_end.tv_sec, timeval_start.tv_usec, timeval_end.tv_usec);
     mbedtls_printf("OCALL NET CONNECT (total time with gettimeofday) = %.4f sec\n", time_elapsed);
     /*
      * 2. Setup stuff
@@ -371,7 +372,7 @@ int main(void)
             mbedtls_printf("[C] cannot read nonce 2\n\n");
             goto exit;
         }
-        print_hex_string("nonce", nonce, NONCE_LEN);
+        // print_hex_string("nonce", nonce, NONCE_LEN);
         break;
 
     } while (1);
@@ -396,11 +397,11 @@ int main(void)
     int sizes[3];
     get_cert_chain(certs[0], certs[1], certs[2], &sizes[0], &sizes[1], &sizes[2]);
 
-    mbedtls_printf("Getting DICE certificates...\n");
-    print_hex_string("certs[0]", certs[0], sizes[0]);
-    print_hex_string("certs[1]", certs[1], sizes[1]);
-    print_hex_string("certs[2]", certs[2], sizes[2]);
-    mbedtls_printf("\n");
+    // mbedtls_printf("Getting DICE certificates...\n");
+    // print_hex_string("certs[0]", certs[0], sizes[0]);
+    // print_hex_string("certs[1]", certs[1], sizes[1]);
+    // print_hex_string("certs[2]", certs[2], sizes[2]);
+    // mbedtls_printf("\n");
 
     ret = 1;
     custom_pk_context key;
@@ -412,7 +413,7 @@ int main(void)
 
     mbedtls_printf("Generating attestation proof...\n");
     crypto_interface(1, nonce, NONCE_LEN, attest_proof, &attest_proof_len, pk);
-    print_hex_string("attest_proof", attest_proof, attest_proof_len);
+    // print_hex_string("attest_proof", attest_proof, attest_proof_len);
     mbedtls_printf("\n");
 
     custom_x509write_csr_init(&req);
@@ -445,7 +446,7 @@ int main(void)
     mbedtls_printf("\n");
 
     #if PRINT_STRUCTS
-    print_custom_x509write_csr("CSR write struct", &req);
+    // print_custom_x509write_csr("CSR write struct", &req);
     #endif
 
     unsigned char out_csr[3072];
@@ -458,7 +459,7 @@ int main(void)
     int dif_csr = 3072-csr_len;
     gen_csr += dif_csr;
 
-    print_hex_string("CSR", gen_csr, csr_len);
+    // print_hex_string("CSR", gen_csr, csr_len);
     mbedtls_printf("\n");
 
     custom_pk_free(&key);
@@ -534,7 +535,7 @@ int main(void)
     mbedtls_printf("\n");
 
     #if PRINT_STRUCTS
-    print_custom_x509_cert("Enclave Certificate", cert_gen);
+    // print_custom_x509_cert("Enclave Certificate", cert_gen);
     #endif
 
     custom_x509_crt_free(&cert_gen);

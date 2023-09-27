@@ -54,6 +54,9 @@ net_connect_wrapper(void* buffer) {
   net_connect_t ret;
   ret.fd = server_fd.fd;
   ret.retval = ret_val;
+  printf("\n[HOST]: this is what I read with gettimeofday = %ld sec for start, %ld sec for end\n", timeval_start.tv_sec, timeval_end.tv_sec);
+  printf("\n[HOST]: this is what I read with gettimeofday = %ld usec for start, %ld usec for end\n", timeval_start.tv_usec, timeval_end.tv_usec);
+
   cout << "Time taken by host to open internet connection is : " << fixed << time_taken << setprecision(6);
   cout << " sec" << endl;
   /* Setup return data from the ocall function */
