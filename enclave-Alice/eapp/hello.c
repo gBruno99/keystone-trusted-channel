@@ -231,10 +231,23 @@ int main(void)
     }
     custom_clock_gettime((void *)&time_open.end);
     custom_gettimeofday((void *)&timeval_end);
-        time_open.which_ocall = OPEN;
+    mbedtls_printf("\n[ENCLAVE] Value of time_open.start.tv_sec (clock_gettime) = %ld sec\n", time_open.start.tv_sec);
+    mbedtls_printf("\n[ENCLAVE] Value of time_open.start.tv_nsec (clock_gettime) = %ld nsec\n", time_open.start.tv_nsec);
+    mbedtls_printf("\n[ENCLAVE] Value of time_open.end.tv_sec (clock_gettime) = %ld sec\n", time_open.end.tv_sec);
+    mbedtls_printf("\n[ENCLAVE] Value of time_open.end.tv_nsec (clock_gettime) = %ld nsec\n", time_open.end.tv_nsec);
+
+    mbedtls_printf("\n[ENCLAVE] Value of timeval_start.tv_sec (gettimeofday) = %ld sec\n", timeval_start.tv_sec);
+    mbedtls_printf("\n[ENCLAVE] Value of timeval_start.tv_usec (gettimeofday) = %ld usec\n", timeval_start.tv_usec);
+    mbedtls_printf("\n[ENCLAVE] Value of time_open.start.tv_sec (gettimeofday) = %ld sec\n", timeval_end.tv_sec);
+    mbedtls_printf("\n[ENCLAVE] Value of time_open.start.tv_sec (gettimeofday) = %ld usec\n", timeval_end.tv_usec);
+
+
+
+
+    time_open.which_ocall = OPEN;
     time_open.total = (long)(time_open.end.tv_nsec - time_open.start.tv_nsec); 
     time_elapsed = timeval_end.tv_sec - timeval_start.tv_sec;
-    time_elapsed = (time_elapsed + (timeval_end.tv_usec - timeval_start.tv_usec)) * 1e-6;
+    // time_elapsed = (time_elapsed + (timeval_end.tv_usec - timeval_start.tv_usec)) * 1e-6;
     mbedtls_printf("OCALL NET CONNECT (total time) = %ld ms\n", (long)(time_open.total / 1000000));
     mbedtls_printf("This is what I read with gettimeofday from enclave = %ld for start, %ld for end\nusec = %ld (start), %ld (end)\n", timeval_start.tv_sec, timeval_end.tv_sec, timeval_start.tv_usec, timeval_end.tv_usec);
     mbedtls_printf("OCALL NET CONNECT (total time with gettimeofday) = %.4f sec\n", time_elapsed);
