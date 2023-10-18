@@ -61,8 +61,10 @@ set(MBEDTLS_LIB_X509_HOST ${MBEDTLS_DIR_HOST}/build/library/libmbedx509.a)
 # find program "makeself"
 find_program(MAKESELF makeself)
 
-# enclave
-add_subdirectory(enclave-Alice)
-# CA
-add_subdirectory(server-CA)
+# # enclave
+# add_subdirectory(enclave-Alice)
+# # CA
+# add_subdirectory(server-CA)
 
+# trusted app
+add_subdirectory(trusted_app)

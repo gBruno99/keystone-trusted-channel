@@ -80,11 +80,11 @@ mkdir -p build
 cd build
 cmake ..
 make
-make enclave-Alice-package
+make trusted-app-package
 
 # copy enclave packages - only for me
-cp enclave-Alice/enclave-Alice.ke ../../keystone/build/overlay/root/
-cp server-CA/server-CA.riscv ../../keystone/build/overlay/root/
+cp trusted-app/trusted-app.ke ../../keystone/build/overlay/root/
+# cp server-CA/server-CA.riscv ../../keystone/build/overlay/root/
 
 # Done!
 echo -e "************ Demo binaries built and copied into overlay directory. ***************
