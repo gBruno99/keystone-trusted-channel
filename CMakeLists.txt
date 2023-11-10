@@ -51,9 +51,13 @@ set(MBEDTLS_LIB_CRYPTO_EAPP ${MBEDTLS_DIR_EAPP}/build/library/libmbedcrypto.a)
 set(MBEDTLS_LIB_TLS_EAPP ${MBEDTLS_DIR_EAPP}/build/library/libmbedtls.a)
 set(MBEDTLS_LIB_X509_EAPP ${MBEDTLS_DIR_EAPP}/build/library/libmbedx509.a)
 
-set(MBEDTLS_LIB_CRYPTO_HOST ${MBEDTLS_DIR_HOST}/build/library/libmbedcrypto.a)
-set(MBEDTLS_LIB_TLS_HOST ${MBEDTLS_DIR_HOST}/build/library/libmbedtls.a)
-set(MBEDTLS_LIB_X509_HOST ${MBEDTLS_DIR_HOST}/build/library/libmbedx509.a)
+set(MBEDTLS_LIB_CRYPTO_HOST_RISCV ${MBEDTLS_DIR_HOST}/build_riscv/library/libmbedcrypto.a)
+set(MBEDTLS_LIB_TLS_HOST_RISCV ${MBEDTLS_DIR_HOST}/build_riscv/library/libmbedtls.a)
+set(MBEDTLS_LIB_X509_HOST_RISCV ${MBEDTLS_DIR_HOST}/build_riscv/library/libmbedx509.a)
+
+set(MBEDTLS_LIB_CRYPTO_HOST_LINUX ${MBEDTLS_DIR_HOST}/build_linux/library/libmbedcrypto.a)
+set(MBEDTLS_LIB_TLS_HOST_LINUX ${MBEDTLS_DIR_HOST}/build_linux/library/libmbedtls.a)
+set(MBEDTLS_LIB_X509_HOST_LINUX ${MBEDTLS_DIR_HOST}/build_linux/library/libmbedx509.a)
 
 # set(OPENSSL_LIB_SSL ${OPENSSL_DIR}/lib/libssl.a)
 # set(OPENSSL_LIB_CRYPTO ${OPENSSL_DIR}/lib/libcrypto.a)
@@ -62,7 +66,14 @@ set(MBEDTLS_LIB_X509_HOST ${MBEDTLS_DIR_HOST}/build/library/libmbedx509.a)
 find_program(MAKESELF makeself)
 
 # enclave
+# add_subdirectory(client)
+# add_subdirectory(hello)
+# add_subdirectory(hello-native)
+# add_subdirectory(enclave-client)
+# add_subdirectory(tls-client)
+# add_subdirectory(tls-server)
+# add_subdirectory(tls-client-enclave)
 add_subdirectory(enclave-Alice)
-# CA
 add_subdirectory(server-CA)
+add_subdirectory(server-verifier)
 
